@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Málaga Weekend</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Figtree:wght@400;600;700&display=swap">
+<style>
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: one narrow phone column; sticky tab bar; days as stacked timelines; challenges as a scoreboard + tap-to-claim list */
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --fg:#13263a; --muted:#5b6f82; --line:#dbe3ea;
+  --sea:#0f5c8c; --sea-soft:#e2eef6; --sun:#e8603c; --sun-soft:#fde8e1; --leaf:#2f7d5b; --leaf-soft:#e1f2e9;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1722; --surface:#132332; --fg:#e7eef4; --muted:#93a6b8; --line:#243749;
+  --sea:#6cb6e6; --sea-soft:#17344a; --sun:#ff8a66; --sun-soft:#3a2219; --leaf:#6fcf9f; --leaf-soft:#173a2b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1722; --surface:#132332; --fg:#e7eef4; --muted:#93a6b8; --line:#243749;
+  --sea:#6cb6e6; --sea-soft:#17344a; --sun:#ff8a66; --sun-soft:#3a2219; --leaf:#6fcf9f; --leaf-soft:#173a2b; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sea)}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.hero{background:var(--sea);color:#fff}
+header.hero .wrap{padding-block:22px 18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;font-weight:600}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,8vw,42px);line-height:1.05;margin:6px 0 6px;text-wrap:balance}
+.hero p{margin:0;opacity:.92;font-size:15px}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:6px;padding-block:8px}
+.tab{flex:1;font:inherit;font-weight:700;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tab .pts{font-variant-numeric:tabular-nums;opacity:.75;font-weight:600}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+main .wrap{padding-block:16px 48px;display:flex;flex-direction:column;gap:22px}
+
+/* day switcher */
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.daybtn{font:inherit;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.daybtn b{display:block;font-family:var(--display);font-size:20px;line-height:1.1}
+.daybtn span{font-size:13px;color:var(--muted)}
+.daybtn[aria-pressed="true"]{border-color:var(--sea);box-shadow:inset 0 0 0 1px var(--sea);background:var(--sea-soft)}
+.dayhead h2{font-family:var(--display);font-size:26px;margin:0;line-height:1.15;text-wrap:balance}
+.dayhead p{margin:4px 0 0;color:var(--muted)}
+.base{display:inline-flex;gap:6px;align-items:center;font-size:13px;font-weight:600;background:var(--sea-soft);color:var(--sea);padding:4px 10px;border-radius:999px;margin-top:8px}
+
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.stop{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.stop:first-child{border-top:0}
+.time{font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted);font-size:14px;padding-top:2px}
+.stop .body{min-width:0}
+.stop h3{margin:0;font-size:17px;line-height:1.3;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.kind{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 8px;border-radius:999px}
+.k-eat{background:var(--sun-soft);color:var(--sun)}
+.k-see{background:var(--sea-soft);color:var(--sea)}
+.k-go{background:var(--leaf-soft);color:var(--leaf)}
+.stop p{margin:4px 0 0;color:var(--fg)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:14px;align-items:center}
+.meta a{color:var(--sea);font-weight:600;text-decoration:none}
+.meta a:hover{text-decoration:underline}
+.cost{color:var(--muted)}
+.check{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted);font-weight:600}
+.check input{width:18px;height:18px;accent-color:var(--leaf)}
+.stop.done h3{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.alt{margin-top:8px;font-size:14px;color:var(--muted)}
+.alt b{color:var(--fg)}
+
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:15px}
+.note h4{margin:0 0 6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.note ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.options{display:grid;gap:10px}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.opt h4{margin:0;font-family:var(--display);font-size:19px}
+.opt .tag{font-size:12px;font-weight:700;color:var(--sun);text-transform:uppercase;letter-spacing:.08em}
+.opt p{margin:4px 0 0;font-size:15px}
+
+/* challenges */
+.score{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.player{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
+.player.lead{border-color:var(--sun);box-shadow:inset 0 0 0 1px var(--sun)}
+.player input{font:inherit;font-weight:700;width:100%;border:0;border-bottom:1px dashed var(--line);background:transparent;color:var(--fg);padding:2px 0}
+.player .big{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums}
+.player .sub{font-size:13px;color:var(--muted)}
+.bar{height:6px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sun);width:0;transition:width .4s}
+.p2 .bar i{background:var(--sea)}
+.crown{font-size:12px;font-weight:700;color:var(--sun);text-transform:uppercase;letter-spacing:.08em;min-height:18px}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{font:inherit;font-size:14px;font-weight:600;white-space:nowrap;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ch{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start}
+.ch .txt{min-width:0}
+.ch h3{margin:0;font-size:16px;line-height:1.35}
+.ch p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.ch .val{font-family:var(--display);font-weight:800;font-size:22px;color:var(--sun);font-variant-numeric:tabular-nums;text-align:right;line-height:1}
+.ch .val small{display:block;font-family:var(--body);font-size:11px;font-weight:600;color:var(--muted)}
+.claims{grid-column:1/-1;display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.claim{font:inherit;font-size:14px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.claim[aria-pressed="true"].c0{background:var(--sun);border-color:var(--sun);color:#fff}
+.claim[aria-pressed="true"].c1{background:var(--sea);border-color:var(--sea);color:#fff}
+:root[data-theme="dark"] .claim[aria-pressed="true"]{color:#0c1722}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .claim[aria-pressed="true"]{color:#0c1722}}
+.ch.both{border-color:var(--leaf)}
+.del{font:inherit;font-size:13px;background:none;border:0;color:var(--muted);cursor:pointer;text-decoration:underline;padding:0}
+form.add{display:grid;grid-template-columns:1fr 80px auto;gap:8px}
+form.add input{font:inherit;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.btn{font:inherit;font-weight:700;padding:9px 14px;border-radius:10px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.warn{background:var(--sun);border-color:var(--sun);color:#fff}
+.foot{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.sync{font-size:14px;font-weight:600;padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.sync.on{background:var(--leaf-soft);border-color:transparent;color:var(--leaf)}
+.sync.on::before{content:"● "}
+.sync.warn{background:var(--sun-soft);border-color:transparent;color:var(--sun)}
+.synccode{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--fg)}
+.synccode span{color:var(--muted)}
+.synccode textarea{font:inherit;font-size:13px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);resize:vertical;word-break:break-all}
+h2.sec{font-family:var(--display);font-size:22px;margin:0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media (max-width:380px){.daybtn b{font-size:17px}.player .big{font-size:36px}}
+</style>
+
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Fre 6 – sön 8 november 2026</div>
+    <h1>Málagahelgen</h1>
+    <p>Tre dagars planer, matställen för runt 25 € per person och en poängtävling mellan Uncle och Niece.</p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sektioner">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-it" aria-controls="view-it" aria-selected="true">Resplan</button>
+    <button class="tab" role="tab" id="tab-ch" aria-controls="view-ch" aria-selected="false">Utmaningar <span class="pts" id="tabpts"></span></button>
+  </div>
+</nav>
+
+<main>
+  <section id="view-it" role="tabpanel" aria-labelledby="tab-it">
+    <div class="wrap">
+      <div class="days" id="days"></div>
+      <div id="day"></div>
+      <div class="note">
+        <h4>Bra att veta</h4>
+        <ul>
+          <li>Solen går ner runt 18:15 i början av november, så planera utsikterna innan dess. Dagarna är oftast runt 20°C.</li>
+          <li>En taxi mellan de två hotellen tar ungefär 15 minuter och kostar runt €10–14.</li>
+          <li>Mercado de Atarazanas har stängt på söndagar, så gå dit på fredag eller lördag.</li>
+          <li>Öppettider och priser bygger på allmän kunskap och är inte kontrollerade i dag. Dubbelkolla innan ni går.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-ch" role="tabpanel" aria-labelledby="tab-ch" hidden>
+    <div class="wrap">
+      <div class="score" id="score"></div>
+      <div class="filters" id="filters" role="group" aria-label="Filtrera utmaningar"></div>
+      <ul class="clist" id="clist"></ul>
+      <div>
+        <h2 class="sec" style="margin-bottom:8px">Lägg till en egen utmaning</h2>
+        <form class="add" id="addform">
+          <input id="addtxt" placeholder="t.ex. Hitta en flamencoklänning" maxlength="60" required aria-label="Utmaning">
+          <input id="addpts" type="number" min="1" max="50" value="10" aria-label="Poäng">
+          <button class="btn" type="submit">Lägg till</button>
+        </form>
+      </div>
+      <div class="foot">
+        <div>Poängen sparas i en cookie på den här telefonen. Håll poängen på en och samma telefon.</div>
+        <div class="row" id="resetrow"><button class="btn ghost" type="button" id="resetbtn">Nollställ alla poäng</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const MAP = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+
+const DAYS = [
+ { id:"fri", short:"Fre 6", sub:"Strand → centrum", title:"Fredag: västra stränderna, sedan gamla stan",
+   intro:"Börja vid havet nära första hotellet, flytta till Calle Comedias efter lunch och tillbringa kvällen i den historiska stadskärnan.",
+   base:"Förmiddag: Av. de Velázquez 212 · Eftermiddag: Calle Comedias 18",
+   stops:[
+    {id:"f1",t:"09:00",k:"eat",n:"Frukost som en local",d:"Vilket kafé som helst på Av. de Velázquez duger. Beställ en tostada con tomate y aceite eller en pitufo (Málagas lilla frukostbröd) och en café “mitad”.",c:"€4–6 per person"},
+    {id:"f2",t:"09:45",k:"see",n:"Playa de la Misericordia & La Chimenea",d:"Ungefär 10 minuters promenad söderut. Den höga tegelskorstenen från 1800-talet (Torre Mónsul) från ett gammalt blysmältverk står precis vid sanden. En bred och lugn strand på morgonen.",m:"Chimenea de los Mónsules Málaga"},
+    {id:"f3",t:"10:30",k:"see",n:"Paseo Marítimo Antonio Banderas",d:"Promenera österut längs strandpromenaden som är uppkallad efter Málagas mest kända skådespelare. Ta en avstickare in i Parque del Oeste med sjö, ankor och stora skulpturer.",m:"Parque del Oeste Málaga"},
+    {id:"f4",t:"11:15",k:"see",n:"Museo Automovilístico y de la Moda",d:"I den gamla tobaksfabriken (La Tabacalera). Veteranbilar bredvid haute couture, ett lättsamt museum för alla åldrar. Räkna med ungefär 1,5 timme. Gratis alternativ: kulturhuset La Térmica på Av. de los Guindos har ofta utställningar.",m:"Museo Automovilístico y de la Moda Málaga",c:"ca €10 vuxen"},
+    {id:"f5",t:"13:30",k:"eat",n:"Lunch: espetos på stranden",d:"Välj en chiringuito (strandrestaurang) längs Huelin/Misericordia med en båt full av sand och eld utanför. Grillade sardiner på spett (espetos), friterad fisk (pescaíto frito) och sallad.",m:"chiringuito Paseo Marítimo Antonio Banderas Málaga",c:"€15–25 per person"},
+    {id:"f6",t:"15:00",k:"go",n:"Flytta till Calle Comedias 18",d:"Hämta väskorna och ta taxi eller Cabify till centrum (ca 15 min). Lämna väskorna och checka in.",m:"Calle Comedias 18, 29008 Málaga",c:"€10–14 taxi"},
+    {id:"f7",t:"16:00",k:"see",n:"Calle Larios, katedralen & romerska teatern",d:"Från hotellet är det ett par minuter till Plaza de la Constitución och Calle Larios. Gå till katedralen, som kallas “La Manquita” (den enarmade damen) eftersom det andra tornet aldrig byggdes klart. Sedan romerska teatern, som syns gratis från gatan, med fästningen Alcazaba ovanför.",m:"Teatro Romano de Málaga"},
+    {id:"f8",t:"17:15",k:"see",n:"Solnedgång vid Muelle Uno & La Farola",d:"Gå genom palmparken Parque de Málaga till hamnpromenaden. Hitta Centre Pompidous färgglada glaskub och se solnedgången vid fyren La Farola.",m:"Muelle Uno Málaga"},
+    {id:"f9",t:"20:30",k:"eat",n:"Middag: tapas i gamla stan",d:"Casa Lola (Calle Granada) är livligt, billigt och bra för att dela: testa pinchos och berenjenas con miel de caña (friterad aubergine med sockerrörshonung). Räkna med en kort kö.",m:"Casa Lola Calle Granada Málaga",c:"€15–25 per person",alt:"<b>Alternativ:</b> El Pimpi vid romerska teatern, en klassisk bodega med vinfat signerade av kändisar. Lite dyrare, så håll er till tapas och media raciones."},
+    {id:"f10",t:"22:00",k:"eat",n:"Dessertpromenad",d:"Turrónglass på Casa Mira på Calle Larios, en Málagafavorit sedan 1890.",m:"Casa Mira Calle Larios Málaga",c:"€3–5"}
+   ]},
+ { id:"sat", short:"Lör 7", sub:"Dagsutflykt", title:"Lördag: en dagsutflykt från stan",
+   intro:"Förslaget är Nerja och Frigiliana, enkelt att nå med buss, med grottor, havsutsikt och en vit by. Fler bra alternativ finns längre ner.",
+   base:"Från och tillbaka till Calle Comedias 18",
+   stops:[
+    {id:"s1",t:"08:30",k:"eat",n:"Snabb frukost nära hotellet",d:"Ta en kaffe och en tostada på vägen till busstationen (ca 20 minuter till fots eller en kort taxiresa).",c:"€4–6 per person"},
+    {id:"s2",t:"09:15",k:"go",n:"ALSA-buss till Nerja",d:"Från Estación de Autobuses de Málaga. Ungefär 1 timme och 15 minuter längs kusten. Köp biljetter i ALSA-appen eller på stationen.",m:"Estación de Autobuses de Málaga",c:"ca €5 enkel resa"},
+    {id:"s3",t:"10:45",k:"see",n:"Cueva de Nerja",d:"Enorma grottor med en av världens största droppstenspelare. Boka en tid online dagen innan. En lokalbuss går från Nerja centrum till grottorna.",m:"Cueva de Nerja",c:"ca €15 vuxen, billigare för barn"},
+    {id:"s4",t:"12:30",k:"see",n:"Balcón de Europa",d:"En palmkantad utsiktsplats över havet mitt i Nerja. Gå ner till den lilla stranden Calahonda nedanför.",m:"Balcón de Europa Nerja"},
+    {id:"s5",t:"13:45",k:"eat",n:"Lunch: Ayos paella på Burrianastranden",d:"En institution i Nerja: paella som lagas över vedeld i jättepannor direkt på stranden, och traditionellt får man påfyllning. Ungefär 15 minuters promenad från Balcón.",m:"Restaurante Ayo Playa Burriana Nerja",c:"€12–20 per person"},
+    {id:"s6",t:"15:30",k:"see",n:"Frigiliana",d:"En kort buss- eller taxiresa upp i bergen (ca 15 minuter). Branta vita gränder, blå dörrar, blomkrukor och mosaiker. Gå vilse i det gamla moriska kvarteret.",m:"Frigiliana casco histórico",c:"buss ca €1–2"},
+    {id:"s7",t:"18:00",k:"go",n:"Tillbaka till Málaga",d:"Buss från Frigiliana eller Nerja tillbaka till Málaga (kolla sista avgångarna). Vila en stund på hotellet."},
+    {id:"s8",t:"20:30",k:"eat",n:"Middag: El Tintero i El Palo",d:"En rolig strandrestaurang utan meny: servitörerna går runt och ropar ut rätterna och man tar de tallrikar man vill ha. Perfekt med en niece! Buss 11 eller taxi från centrum (ca 15 min).",m:"El Tintero El Palo Málaga",c:"€15–25 per person",alt:"<b>För trötta?</b> Stanna i centrum och prova Uvedoble Taberna (Calle Císter) med moderna tapas nära katedralen."}
+   ],
+   options:[
+    {tag:"Mest dramatisk",n:"Ronda",d:"En stad delad av en 100 meter djup ravin med bron Puente Nuevo över, plus en av Spaniens äldsta tjurfäktningsarenor. Ungefär 2 timmar med tåg eller buss åt varje håll, så det blir en heldag."},
+    {tag:"Mest äventyrlig",n:"Caminito del Rey",d:"En gångväg fastskruvad i klippväggarna i en ravin. Måste bokas i förväg och blir slutsåld. Lägsta ålder 8 år. Tåg från Málaga till El Chorro, ca 45 minuter."},
+    {tag:"Kortast resa",n:"Mijas Pueblo",d:"En vit by i bergen ovanför Fuengirola, ca 45 minuter bort. Fina utsiktsplatser, en pytteliten tjurfäktningsarena och massor av små butiker. Passar bra ihop med en eftermiddag på stranden."}
+   ]},
+ { id:"sun", short:"Sön 8", sub:"Förmiddag & hemresa", title:"Söndag: en sista förmiddag i stan",
+   intro:"Håll er nära hotellet så att hemresan blir enkel. Många museer har fri entré på söndagseftermiddagar om ni är kvar.",
+   base:"Calle Comedias 18",
+   stops:[
+    {id:"u1",t:"09:00",k:"eat",n:"Churros på Casa Aranda",d:"Málagas klassiska churrería sedan 1932, i en liten gränd bredvid Atarazanas. Churros doppade i tjock varm choklad.",m:"Casa Aranda Málaga",c:"€4–7 per person"},
+    {id:"u2",t:"10:00",k:"see",n:"Alcazaba & Gibralfaro",d:"Det moriska palatset och fästningen, sedan promenaden upp till borgen Gibralfaro för stadens bästa utsikt över hamnen och tjurfäktningsarenan. En kombinerad biljett är billig. Ha bra skor. Ta buss 35 eller taxi upp och gå ner om benen är trötta.",m:"Alcazaba de Málaga",c:"ca €5,50 kombibiljett"},
+    {id:"u3",t:"12:00",k:"see",n:"Plaza de la Merced & Picasso",d:"Picasso föddes vid det här torget. Sätt er bredvid hans bronsstaty på bänken och titta in i hans födelsehus (Casa Natal) på hörnet.",m:"Plaza de la Merced Málaga"},
+    {id:"u4",t:"13:00",k:"eat",n:"Lunch: Antigua Casa de Guardia och sedan tapas",d:"Börja på Málagas äldsta bar (1840) vid Alameda, där notan skrivs med krita på träbardisken. Ät sedan lunch på La Tranca (Calle Carretería), billigt och trevligt med god tortilla och croquetas.",m:"La Tranca Calle Carretería Málaga",c:"€15–20 per person"},
+    {id:"u5",t:"15:00",k:"go",n:"Dags att åka hem",d:"Hämta väskorna. Tåget C1 från stationen Centro-Alameda går till flygplatsen på ca 12 minuter.",m:"Estación Málaga Centro Alameda"}
+   ]}
+];
+
+const CHALL = [
+ {id:"c1",g:"Gamla stan",n:"Selfie med Picasso",d:"Sätt dig bredvid Picassostatyn på bänken vid Plaza de la Merced.",p:10},
+ {id:"c2",g:"Gamla stan",n:"Hitta tornet som saknas",d:"Foto på katedralen där du pekar på tornet som aldrig byggdes.",p:10},
+ {id:"c3",g:"Gamla stan",n:"Romare och morer på en bild",d:"Foto på romerska teatern med Alcazaba bakom.",p:10},
+ {id:"c4",g:"Gamla stan",n:"Gå hela Calle Larios",d:"Från Plaza de la Constitución till Alameda.",p:5},
+ {id:"c5",g:"Gamla stan",n:"Kung på borgen",d:"Klättra upp till Gibralfaro och fotografera tjurfäktningsarenan uppifrån.",p:20},
+ {id:"c6",g:"Gamla stan",n:"Gatukonstjakt",d:"Hitta och fotografera 3 stora väggmålningar i konstkvarteret Soho.",p:20},
+ {id:"c7",g:"Gamla stan",n:"Krita på bardisken",d:"Beställ något att dricka på Antigua Casa de Guardia och se notan skrivas med krita.",p:15},
+ {id:"c8",g:"Gamla stan",n:"Glasmålning i saluhallen",d:"Hitta det stora blyinfattade glasfönstret i Mercado de Atarazanas (inte på söndag).",p:10},
+ {id:"c9",g:"Havet & hamnen",n:"Rör vid Medelhavet",d:"Få ner åtminstone händerna i havet.",p:10},
+ {id:"c10",g:"Havet & hamnen",n:"Den gamla skorstenen",d:"Foto framför La Chimenea vid Misericordiastranden.",p:10},
+ {id:"c11",g:"Havet & hamnen",n:"Den färgglada kuben",d:"Foto med Centre Pompidous glaskub.",p:10},
+ {id:"c12",g:"Havet & hamnen",n:"Solnedgång vid La Farola",d:"Solnedgångsfoto vid fyren i hamnen.",p:15},
+ {id:"c13",g:"Havet & hamnen",n:"Banderasskylten",d:"Hitta en gatuskylt för Paseo Marítimo Antonio Banderas.",p:5},
+ {id:"c14",g:"Mat",n:"Ät en espeto",d:"Sardiner grillade på spett över en eld på stranden.",p:15},
+ {id:"c15",g:"Mat",n:"Bli en boquerón",d:"Ät boquerones fritos (friterade ansjovisar). Folk från Málaga kallas boquerones!",p:10},
+ {id:"c16",g:"Mat",n:"Pitufofrukost",d:"Beställ en pitufo, Málagas lilla frukostbröd.",p:10},
+ {id:"c17",g:"Mat",n:"Kaffe på Málagavis",d:"Beställ kaffe med det lokala namnet: en “mitad”, “sombra” eller “nube”.",p:10},
+ {id:"c18",g:"Mat",n:"Churros con chocolate",d:"Doppa churros i varm choklad.",p:10},
+ {id:"c19",g:"Mat",n:"Fånga en tallrik på El Tintero",d:"Ta en rätt från en ropande servitör.",p:15},
+ {id:"c20",g:"Mat",n:"Beställ bara på spanska",d:"Beställ en hel måltid utan ett ord engelska eller svenska.",p:20},
+ {id:"c21",g:"Mat",n:"Honungsaubergine",d:"Prova berenjenas con miel de caña.",p:10},
+ {id:"c22",g:"Dagsutflykt",n:"Inne i grottan",d:"Besök Cueva de Nerja och hitta den gigantiska pelaren.",p:20},
+ {id:"c23",g:"Dagsutflykt",n:"Europas balkong",d:"Foto vid räcket på Balcón de Europa.",p:15},
+ {id:"c24",g:"Dagsutflykt",n:"Blå dörr, vit vägg",d:"Foto framför en blå dörr i Frigiliana.",p:15},
+ {id:"c25",g:"Dagsutflykt",n:"Påfyllning",d:"Ät upp en tallrik av Ayos strandpaella.",p:10},
+ {id:"c26",g:"Dagsutflykt",n:"Över ravinen",d:"Om ni väljer Ronda: foto på eller av Puente Nuevo.",p:20},
+ {id:"c27",g:"Lokalt liv",n:"Prata malagueño",d:"Använd “¡Quillo!” (kompis!) och “chiquitito” (pytteliten) i en mening.",p:10},
+ {id:"c28",g:"Lokalt liv",n:"Gröna papegojor",d:"Hitta en vild munkparakit i palmerna.",p:15},
+ {id:"c29",g:"Lokalt liv",n:"Biznaga",d:"Hitta en biznaga (Málagas jasminbukett), på riktigt eller som symbol eller staty.",p:15},
+ {id:"c30",g:"Lokalt liv",n:"Säg “hola” till en främling",d:"Få en local att tipsa er om vart ni ska gå.",p:10},
+ {id:"c31",g:"Gamla stan",n:"Genom hästskobågen",d:"Selfie under en av de moriska hästskobågarna i Alcazaba.",p:10},
+ {id:"c32",g:"Gamla stan",n:"Saluhallens moriska port",d:"Hitta den gamla nasridiska stenporten på framsidan av Mercado de Atarazanas.",p:10},
+ {id:"c33",g:"Gamla stan",n:"Picassospanare",d:"Hitta ett Picassoverk eller citat någonstans i stan utanför ett museum.",p:10},
+ {id:"c34",g:"Gamla stan",n:"Kakelskylt",d:"Foto på ett gatunamn målat på kakelplattor.",p:5},
+ {id:"c35",g:"Gamla stan",n:"Häst och vagn",d:"Hitta en hästdragen vagn nära katedralen eller hamnen.",p:10},
+ {id:"c36",g:"Gamla stan",n:"Apelsinträd",d:"Hitta ett apelsinträd på en gata eller ett torg.",p:5},
+ {id:"c37",g:"Gamla stan",n:"Upp utan paus",d:"Gå upp till Gibralfaro utan att stanna en enda gång.",p:15},
+ {id:"c38",g:"Gamla stan",n:"Flamencofönster",d:"Hitta en flamencoklänning i ett skyltfönster.",p:10},
+ {id:"c39",g:"Havet & hamnen",n:"Kryssningsfartyg",d:"Hitta ett kryssningsfartyg i hamnen.",p:10},
+ {id:"c40",g:"Havet & hamnen",n:"Namn i sanden",d:"Skriv båda era namn i sanden och ta ett foto.",p:5},
+ {id:"c41",g:"Havet & hamnen",n:"Snäckskal",d:"Hitta ett snäckskal att ta med hem.",p:5},
+ {id:"c42",g:"Havet & hamnen",n:"Hoppbild",d:"Foto där ni båda hoppar på stranden samtidigt.",p:15},
+ {id:"c43",g:"Havet & hamnen",n:"La Malagueta",d:"Gå förbi den runda tjurfäktningsarenan La Malagueta.",p:5},
+ {id:"c44",g:"Mat",n:"Campero",d:"Ät en campero, Málagas jättestora rostade smörgås.",p:10},
+ {id:"c45",g:"Mat",n:"Tortas locas",d:"Prova en torta loca, Málagas bakelse med orange glasyr.",p:15},
+ {id:"c46",g:"Mat",n:"Ajoblanco",d:"Prova ajoblanco, Málagas kalla soppa på mandel och vitlök.",p:15},
+ {id:"c47",g:"Mat",n:"Gazpachuelo",d:"Prova gazpachuelo, Málagas varma fisksoppa.",p:15},
+ {id:"c48",g:"Mat",n:"Málagarussin",d:"Smaka pasas de Málaga eller muskatdruvor.",p:10},
+ {id:"c49",g:"Mat",n:"Mysteriefrukt",d:"Köp en frukt i saluhallen som du aldrig har smakat.",p:10},
+ {id:"c50",g:"Dagsutflykt",n:"Kungen på balkongen",d:"Hitta statyn av kung Alfonso XII vid Balcón de Europa.",p:10},
+ {id:"c51",g:"Dagsutflykt",n:"Historia i kakel",d:"Läs en av keramikplattorna som berättar Frigilianas historia.",p:15},
+ {id:"c52",g:"Lokalt liv",n:"Åk buss",d:"Ta en stadsbuss och betala eller blippa själv.",p:10},
+ {id:"c53",g:"Lokalt liv",n:"Fem språk",d:"Hör fem olika språk på Calle Larios.",p:10},
+ {id:"c54",g:"Lokalt liv",n:"Favorittapa",d:"Fråga en local om deras favorittapa och beställ den.",p:15},
+ {id:"c55",g:"Lokalt liv",n:"Vykort hem",d:"Köp, skriv och posta ett vykort.",p:15},
+ {id:"c56",g:"Dueller",n:"Bästa solnedgångsfotot",d:"Ni tar varsitt. Den andra måste erkänna vem som vann.",p:20},
+ {id:"c57",g:"Dueller",n:"Gissa notan",d:"Gissa totalen innan notan kommer. Närmast vinner.",p:10},
+ {id:"c58",g:"Dueller",n:"Först att se en papegoja",d:"Ropa “¡Loro!” först när en grön parakit dyker upp.",p:10},
+ {id:"c59",g:"Dueller",n:"Spansk ordbattle",d:"Turas om att säga spanska matord. Den som kör fast först förlorar.",p:10},
+ {id:"c60",g:"Dueller",n:"Stegmästare",d:"Flest steg i telefonen när lördagen är slut.",p:20}
+];
+
+/* ---------- storage: cookie (requested) + localStorage backup ---------- */
+const KEY="mlg26";
+let S={names:["Uncle","Niece"],c:{},i:{},x:[],ts:0};
+function enc(o){return encodeURIComponent(JSON.stringify(o))}
+function readCookie(){try{const m=document.cookie.split("; ").find(r=>r.startsWith(KEY+"="));return m?JSON.parse(decodeURIComponent(m.slice(KEY.length+1))):null}catch(e){return null}}
+function readLS(){try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null}catch(e){return null}}
+function load(){const a=readCookie(),b=readLS();const best=[a,b].filter(Boolean).sort((p,q)=>(q.ts||0)-(p.ts||0))[0];if(best)S=Object.assign(S,best);if(S.names[0]==="Michael")S.names[0]="Uncle"}
+function save(){S.ts=Date.now();const v=enc(S);
+  try{document.cookie=KEY+"="+v+"; max-age="+(60*60*24*90)+"; path=/; SameSite=None; Secure"}catch(e){}
+  try{if(!readCookie())document.cookie=KEY+"="+v+"; max-age="+(60*60*24*90)+"; path=/; SameSite=Lax"}catch(e){}
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+load();
+
+function pushClaim(){}function pushNames(){}function pushCustom(){}const readOnly=false;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove("show"),1600)}
+
+/* ---------- tabs ---------- */
+function showTab(which){const it=which!=="ch";$("#tab-it").setAttribute("aria-selected",it);$("#tab-ch").setAttribute("aria-selected",!it);$("#view-it").hidden=!it;$("#view-ch").hidden=it;try{localStorage.setItem(KEY+"tab",which)}catch(e){}}
+$("#tab-it").onclick=()=>showTab("it");$("#tab-ch").onclick=()=>showTab("ch");
+
+/* ---------- itinerary ---------- */
+function defaultDay(){const d=new Date();const m=d.getMonth(),dd=d.getDate(),y=d.getFullYear();if(y===2026&&m===10){if(dd===7)return"sat";if(dd>=8)return"sun"}return"fri"}
+let curDay=(()=>{try{return localStorage.getItem(KEY+"day")||defaultDay()}catch(e){return defaultDay()}})();
+function renderDays(){$("#days").innerHTML=DAYS.map(d=>`<button class="daybtn" aria-pressed="${d.id===curDay}" data-d="${d.id}"><b>${d.short}</b><span>${d.sub}</span></button>`).join("");
+  document.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{curDay=b.dataset.d;try{localStorage.setItem(KEY+"day",curDay)}catch(e){};renderDays();renderDay()})}
+function renderDay(){const d=DAYS.find(x=>x.id===curDay);const kinds={eat:"Äta",see:"Se",go:"Resa"};
+  let h=`<div class="dayhead"><h2>${d.title}</h2><p>${d.intro}</p><div class="base">Utgångspunkt: ${d.base}</div></div><ol class="timeline">`;
+  h+=d.stops.map(s=>`<li class="stop${S.i[s.id]?" done":""}"><div class="time">${s.t}</div><div class="body"><h3>${s.n} <span class="kind k-${s.k}">${kinds[s.k]}</span></h3><p>${s.d}</p>${s.alt?`<div class="alt">${s.alt}</div>`:""}<div class="meta">${s.m?`<a href="${MAP(s.m)}" target="_blank" rel="noopener">Karta ↗</a>`:""}${s.c?`<span class="cost">${s.c}</span>`:""}<label class="check"><input type="checkbox" id="it-${s.id}" data-i="${s.id}" ${S.i[s.id]?"checked":""}> Klart</label></div></div></li>`).join("");
+  h+=`</ol>`;
+  if(d.options)h+=`<div class="options"><h2 class="sec">Fler dagsutflykter att fundera på</h2>${d.options.map(o=>`<div class="opt"><div class="tag">${o.tag}</div><h4>${o.n}</h4><p>${o.d}</p></div>`).join("")}</div>`;
+  $("#day").innerHTML=h;
+  document.querySelectorAll("[data-i]").forEach(cb=>cb.onchange=()=>{if(cb.checked)S.i[cb.dataset.i]=1;else delete S.i[cb.dataset.i];save();cb.closest(".stop").classList.toggle("done",cb.checked)})}
+
+/* ---------- challenges ---------- */
+let filt="Alla";
+const allCh=()=>CHALL.concat(S.x.map(x=>({id:x.id,g:"Egna",n:x.n,d:"Tillagd av er",p:x.p,own:1})));
+function totals(){const t=[0,0],n=[0,0];allCh().forEach(c=>{const v=S.c[c.id]||0;if(v&1){t[0]+=c.p;n[0]++}if(v&2){t[1]+=c.p;n[1]++}});return{t,n}}
+function maxPts(){return allCh().reduce((a,c)=>a+c.p,0)}
+function renderScore(){const {t,n}=totals(),mx=maxPts(),cnt=allCh().length;const lead=t[0]===t[1]?-1:(t[0]>t[1]?0:1);
+  $("#score").innerHTML=[0,1].map(i=>`<div class="player p${i+1}${lead===i?" lead":""}"><div class="crown">${lead===i?"Leder":(t[0]===t[1]&&t[0]>0?"Lika":"")}</div><input id="name${i}" value="${esc(S.names[i])}" maxlength="18" aria-label="Namn spelare ${i+1}"><div class="big">${t[i]}</div><div class="sub">poäng · ${n[i]} av ${cnt} klara</div><div class="bar"><i style="width:${mx?Math.round(t[i]/mx*100):0}%"></i></div></div>`).join("");
+  [0,1].forEach(i=>{const el=$("#name"+i);el.onchange=()=>{if(readOnly){el.value=S.names[i];toast("Endast visning på den här telefonen");return}S.names[i]=el.value.trim()||(i?"Niece":"Uncle");save();pushNames();renderList()}});
+  $("#tabpts").textContent=`${t[0]}–${t[1]}`}
+function renderFilters(){const gs=["Alla","Inte klara",...new Set(allCh().map(c=>c.g))];
+  $("#filters").innerHTML=gs.map(g=>`<button class="chip" aria-pressed="${g===filt}" data-g="${esc(g)}">${esc(g)}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filt=b.dataset.g;renderFilters();renderList()})}
+function renderList(){let list=allCh();if(filt==="Inte klara")list=list.filter(c=>(S.c[c.id]||0)!==3);else if(filt!=="Alla")list=list.filter(c=>c.g===filt);
+  $("#clist").innerHTML=list.length?list.map(c=>{const v=S.c[c.id]||0;return `<li class="ch${v===3?" both":""}"><div class="txt"><h3>${esc(c.n)}</h3><p>${esc(c.d)}${c.own?` · <button class="del" data-del="${c.id}">Ta bort</button>`:""}</p></div><div class="val">${c.p}<small>poäng</small></div><div class="claims">${[0,1].map(i=>`<button class="claim c${i}" data-c="${c.id}" data-p="${i}" aria-pressed="${!!(v&(1<<i))}">${(v&(1<<i))?"✓ ":""}${esc(S.names[i])}</button>`).join("")}</div></li>`}).join(""):`<li class="note">Inget kvar här. Bra jobbat!</li>`;
+  document.querySelectorAll(".claim").forEach(b=>b.onclick=()=>{if(readOnly){toast("Endast visning på den här telefonen");return}const id=b.dataset.c,bit=1<<(+b.dataset.p);const v=(S.c[id]||0)^bit;if(v)S.c[id]=v;else delete S.c[id];save();pushClaim(id);
+    const c=allCh().find(x=>x.id===id);if(v&bit)toast(`+${c.p} till ${S.names[+b.dataset.p]}`);renderScore();renderList()});
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(readOnly)return;const id=b.dataset.del;const x=S.x.find(y=>y.id===id);S.x=S.x.filter(y=>y.id!==id);if(S.c[id]){delete S.c[id];pushClaim(id)}save();if(x)pushCustom(x,true);renderAllCh()})}
+function renderAllCh(){renderScore();renderFilters();renderList()}
+$("#addform").onsubmit=e=>{e.preventDefault();const n=$("#addtxt").value.trim();const p=Math.max(1,Math.min(50,parseInt($("#addpts").value)||10));if(!n)return;if(readOnly){toast("Endast visning på den här telefonen");return}const nx={id:"x"+Date.now().toString(36),n,p};S.x.push(nx);save();pushCustom(nx);$("#addtxt").value="";filt="Alla";renderAllCh();toast("Utmaning tillagd")};
+function resetRow(confirming){const r=$("#resetrow");if(!confirming){r.innerHTML=`<button class="btn ghost" type="button" id="resetbtn">Nollställ alla poäng</button>`;$("#resetbtn").onclick=()=>resetRow(true)}else{r.innerHTML=`<span>Rensa alla avklarade utmaningar?</span><button class="btn warn" type="button" id="yes">Ja, nollställ</button><button class="btn ghost" type="button" id="no">Avbryt</button>`;$("#yes").onclick=()=>{if(readOnly){resetRow(false);toast("Endast visning på den här telefonen");return}const ids=Object.keys(S.c);S.c={};ids.forEach(pushClaim);save();resetRow(false);renderAllCh();toast("Poängen nollställda")};$("#no").onclick=()=>resetRow(false)}}
+
+renderDays();renderDay();renderAllCh();resetRow(false);
+</script>
+
+</body>
+</html>
